@@ -62,8 +62,7 @@ Agents must not:
 - rename generated files
 - patch generated code manually
 
-If generated code needs to change, modify the OpenAPI contract
-or Orval configuration as appropriate, then regenerate:
+If generated code needs to change, modify the OpenAPI contract or Orval configuration as appropriate, then regenerate:
 
 ```bash
 pnpm run api:generate
@@ -102,26 +101,70 @@ Do not store server state in a client-state store.
 
 ## Architecture
 
-Prefer feature-based organization for domain-specific frontend code.
+Use feature-based organization for domain-specific frontend code.
 
 Expected high-level structure:
 
 ```text
 src/
-├── app/
-├── generated/        # Orval generated code
-├── features/
-│   ├── auth/
-│   ├── products/
-│   ├── cart/
-│   ├── checkout/
-│   ├── orders/
-│   ├── shipping/
-│   ├── stores/
-│   └── profile/
+├── app/              # Application infrastructure
+├── generated/        # Orval generated code, read-only
+├── features/         # Domain-specific frontend features
 ├── components/       # Shared UI components
-└── lib/              # Shared infrastructure
+├── assets/
+├── api.ts            # Shared API infrastructure
+├── auth.ts           # Shared authentication infrastructure
+└── lib/              # Shared infrastructure when required
 ```
+
+### Features
+
+Domain-specific pages, components, and frontend logic belong inside their corresponding feature directory.
+
+Example:
+
+```text
+src/features/products/
+├── pages/
+├── components/
+└── ...
+```
+
+A feature does not need to contain every possible subdirectory. Create only the structure required by the feature being implemented.
+
+Examples of feature boundaries include:
+
+```text
+src/features/
+├── auth/
+├── products/
+├── cart/
+├── checkout/
+├── orders/
+├── shipping/
+├── stores/
+└── profile/
+```
+
+Do not create empty feature directories unless the corresponding feature is being implemented.
+
+Feature-specific code must remain inside its feature directory.
+
+For example, product-specific pages and components belong in:
+
+```text
+src/features/products/
+```
+
+rather than:
+
+```text
+src/components/
+```
+
+Shared components belong in `src/components/` only when they are genuinely reusable across multiple features.
+
+Do not move feature-specific code into shared directories merely for convenience.
 
 Do not create additional architectural layers without a clear technical reason.
 
@@ -167,6 +210,10 @@ The UI should be developed using the Impeccable skill when the UI implementation
 
 Impeccable is responsible for frontend design and UX decisions, not backend API behavior.
 
+When implementing a domain-specific UI, place the resulting pages, components, and feature-specific logic inside the corresponding directory under `src/features/`.
+
+Use `src/components/` only for genuinely shared UI.
+
 UI implementation must consume the existing API integration layer rather than creating ad hoc API calls.
 
 Do not change API behavior to accommodate a UI design. If the API contract cannot support a required UI behavior, report the limitation.
@@ -184,6 +231,12 @@ After modifying or extending the API contract:
 ```bash
 pnpm run api:generate
 pnpm run typecheck
+```
+
+For changes affecting the production application, also run:
+
+```bash
+pnpm run build
 ```
 
 Do not consider a task complete while TypeScript errors remain.
