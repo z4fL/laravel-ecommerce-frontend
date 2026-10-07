@@ -1,5 +1,8 @@
 let authorization: string | undefined;
 
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+export const API_ORIGIN = new URL(API_BASE_URL).origin;
+
 export class ApiError extends Error {
   readonly status: number;
   readonly data: unknown;
@@ -28,8 +31,7 @@ export const clearAccessToken = () => {
 };
 
 export const apiFetch = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
-  const url = new URL(path.replace(/^\/+/, ""), `${baseUrl.replace(/\/+$/, "")}/`);
+  const url = new URL(path.replace(/^\/+/, ""), `${API_BASE_URL.replace(/\/+$/, "")}/`);
   const headers = new Headers(options.headers);
   if (authorization) headers.set("Authorization", authorization);
 

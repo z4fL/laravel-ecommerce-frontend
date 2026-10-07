@@ -1,1 +1,51 @@
+@import '@fontsource-variable/archivo';
 @import "tailwindcss";
+
+@theme {
+  /* Core */
+  --color-charcoal: #252720;
+  --color-charcoal-hover: #383a31;
+  --color-bone: #f0efe8;
+  --color-paper: #faf9f4;
+  --color-ink: #252720;
+  --color-ink-soft: #55564f;
+  --color-muted: #66675f;
+
+  /* Rules and borders */
+  --color-rule: #cecec4;
+  --color-rule-strong: #aaa99e;
+  --color-rule-soft: #dad9d0;
+
+  /* Accent */
+  --color-spectral-citron: #d9e96d;
+  --color-marker-olive: #5b681b;
+
+  /* Surfaces */
+  --color-tile: #e2e1d8;
+  --color-skeleton: #dfded5;
+}
+
+:root {
+  color: var(--color-ink);
+  background: var(--color-bone);
+  font-family: 'Archivo Variable', 'Archivo', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  color: var(--color-charcoal);
+  background: var(--color-spectral-citron);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-marker-olive);
+  outline-offset: 4px;
+}
+
+button,
+input {
+  font: inherit;
+}

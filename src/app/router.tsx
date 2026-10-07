@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router'
+import { HomePage } from '../features/home/HomePage'
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -9,7 +10,7 @@ function PlaceholderPage({ title }: { title: string }) {
 }
 
 export const router = createBrowserRouter([
-  { path: '/', element: <PlaceholderPage title="Home" /> },
+  { path: '/', element: <HomePage /> },
   { path: '/products', element: <PlaceholderPage title="Products" /> },
   { path: '/login', element: <PlaceholderPage title="Login" /> },
   { path: '/cart', element: <PlaceholderPage title="Cart" /> },
