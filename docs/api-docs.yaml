@@ -69,6 +69,10 @@ paths:
                     type: string
                     example: 'User created successfully.'
                   data:
+                    required:
+                      - user
+                      - access_token
+                      - token_type
                     properties:
                       user:
                         $ref: '#/components/schemas/User'
@@ -127,6 +131,10 @@ paths:
                     type: string
                     example: 'Login successful.'
                   data:
+                    required:
+                      - user
+                      - access_token
+                      - token_type
                     properties:
                       user:
                         $ref: '#/components/schemas/User'
