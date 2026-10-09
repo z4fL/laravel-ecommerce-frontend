@@ -1,6 +1,8 @@
 import { createBrowserRouter } from 'react-router'
+import { StorefrontLayout } from './StorefrontLayout'
 import { HomePage } from '../features/home/HomePage'
 import { ProductsPage } from '../features/products/ProductsPage'
+import { ProductDetailPage } from '../features/product-detail/ProductDetailPage'
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -11,8 +13,14 @@ function PlaceholderPage({ title }: { title: string }) {
 }
 
 export const router = createBrowserRouter([
-  { path: '/', element: <HomePage /> },
-  { path: '/products', element: <ProductsPage /> },
+  {
+    element: <StorefrontLayout />,
+    children: [
+      { path: '/', element: <HomePage /> },
+      { path: '/products', element: <ProductsPage /> },
+      { path: '/products/:slug', element: <ProductDetailPage /> },
+    ],
+  },
   { path: '/login', element: <PlaceholderPage title="Login" /> },
   { path: '/cart', element: <PlaceholderPage title="Cart" /> },
 ])

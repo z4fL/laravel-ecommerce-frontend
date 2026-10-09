@@ -104,6 +104,7 @@ export const apiFetch = async <T>(
   );
 
   const headers = new Headers(options.headers);
+  headers.set("Accept", "application/json");
 
   if (authorization) {
     headers.set("Authorization", authorization);

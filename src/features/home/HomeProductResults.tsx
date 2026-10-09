@@ -1,8 +1,7 @@
 import { Link } from 'react-router'
 import { LuArrowRight } from 'react-icons/lu'
 import type { Product } from '../../generated/models'
-import { productGridClass } from './homeStyles'
-import { HomeProductTile } from './HomeProductTile'
+import { StorefrontProductTile } from '../../components/storefront/StorefrontProductTile'
 
 interface HomeProductResultsProps {
   products: Product[]
@@ -72,8 +71,14 @@ export function HomeProductResults({
               </button>
             </div>
           )}
-          <div className={productGridClass}>
-            {products.map((product) => <HomeProductTile key={product.id} product={product} />)}
+          <div className="product-grid">
+            {products.map((product) => (
+              <StorefrontProductTile
+                key={product.id}
+                product={product}
+                productHref={`/products/${encodeURIComponent(product.slug)}`}
+              />
+            ))}
           </div>
           <div className="mt-[43px] flex justify-center">
             <Link
@@ -91,7 +96,7 @@ export function HomeProductResults({
 
 function ProductSkeletons() {
   return (
-    <div className={productGridClass} role="status" aria-label="Loading products">
+    <div className="product-grid" role="status" aria-label="Loading products">
       {Array.from({ length: 4 }, (_, index) => (
         <div className="min-w-0" key={index} aria-hidden="true">
           <div className="aspect-[4/4.65] bg-tile" />

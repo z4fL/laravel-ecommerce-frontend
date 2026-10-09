@@ -1,0 +1,52 @@
+{
+  "title": "Choose the product detail structure",
+  "question": "Which page structure best helps a shopper assess a product from its documented information?",
+  "options": [
+    {
+      "id": "structure-7",
+      "label": "Image-led summary",
+      "kicker": "THE ROLL",
+      "lineage": "A split product overview with details continuing below.",
+      "thesis": "Let the product image and a concise, complete summary share the first read.",
+      "palette": ["#252720", "#f0efe8", "#faf9f4", "#d9e96d", "#5b681b"],
+      "materials": ["Archivo typography", "bone field", "fine rules", "one citron action signal"],
+      "viewport": "A single API image leads on the left; product name, category, API price, stock, quantity, and the conditional cart action align on the right. Description and other documented fields continue below.",
+      "risk": "The split can narrow the description column; preserve a readable single-column sequence on compact screens.",
+      "wireframe": {"cols": 12, "rows": 8, "regions": [{"label": "Storefront navigation", "x": 0, "y": 0, "w": 12, "h": 1}, {"label": "Breadcrumb", "x": 0, "y": 1, "w": 12, "h": 1}, {"label": "Single product image", "x": 0, "y": 2, "w": 7, "h": 4, "accent": true}, {"label": "Name, price, stock, quantity, cart action", "x": 7, "y": 2, "w": 5, "h": 4}, {"label": "Description and documented product information", "x": 0, "y": 6, "w": 12, "h": 2}]},
+      "html": "<div style='font-family:Archivo Variable,Archivo,sans-serif;color:#252720;background:#f0efe8'><header style='background:#252720;color:#faf9f4;padding:16px 24px;display:flex;justify-content:space-between'><strong>The Shop</strong><nav>Products　 Cart　 Sign in</nav></header><main style='padding:28px 24px'><div style='color:#66675f;font-size:13px'>Products / [Category, when provided]</div><div style='display:grid;grid-template-columns:1.15fr .85fr;gap:32px;margin-top:20px'><div style='aspect-ratio:4/4.65;background:#e2e1d8;display:grid;place-items:center;color:#66675f'>[Primary product image from API / Image unavailable]</div><section><div style='font-size:13px;color:#66675f'>[Category from API]</div><h1 style='font-size:34px;line-height:1.08;margin:8px 0'>[Product name from API]</h1><div style='font-size:20px;margin:14px 0'>[Price from API; currency not documented]</div><p style='border-top:1px solid #cecec4;padding-top:14px'>[Stock status from API]</p><label>Quantity <input type='number' min='1' value='1' style='width:64px;padding:10px;border:1px solid #aaa99e;background:#faf9f4'></label><p><button style='margin-top:12px;padding:14px 20px;border:0;background:#252720;color:#d9e96d'>Add to cart when signed in and available</button></p></section></div><section style='border-top:1px solid #cecec4;margin-top:28px;padding-top:18px'><h2>Product information</h2><p>[Description from API, when provided]</p><p>[Store name and tags from API, when provided]</p></section></main></div>"
+    },
+    {
+      "id": "structure-6",
+      "label": "Image with purchase rail",
+      "lineage": "A broad product image paired with a narrow action rail.",
+      "thesis": "Keep the product visible while the purchase controls stay in one predictable place.",
+      "palette": ["#252720", "#f0efe8", "#faf9f4", "#d9e96d", "#5b681b"],
+      "materials": ["Archivo typography", "bone field", "fine rules", "one citron action signal"],
+      "viewport": "Product identity and category sit above a wide single-image area; a narrow rail carries API price, stock, quantity, and the conditional cart action. Description, store, and tags follow as unboxed text.",
+      "risk": "A narrow action rail can feel cramped at mid-size widths; let the image and action area stack before either becomes compressed.",
+      "wireframe": {"cols": 12, "rows": 8, "regions": [{"label": "Storefront navigation", "x": 0, "y": 0, "w": 12, "h": 1}, {"label": "Breadcrumb and product identity", "x": 0, "y": 1, "w": 12, "h": 1}, {"label": "Single product image", "x": 0, "y": 2, "w": 9, "h": 5, "accent": true}, {"label": "Price, stock, quantity, cart action", "x": 9, "y": 2, "w": 3, "h": 5}, {"label": "Description and documented details", "x": 0, "y": 7, "w": 12, "h": 1}]},
+      "html": "<div style='font-family:Archivo Variable,Archivo,sans-serif;color:#252720;background:#f0efe8'><header style='background:#252720;color:#faf9f4;padding:16px 24px;display:flex;justify-content:space-between'><strong>The Shop</strong><nav>Products　 Cart　 Sign in</nav></header><main style='padding:28px 24px'><div style='color:#66675f;font-size:13px'>Products / [Category, when provided]</div><div style='display:flex;justify-content:space-between;align-items:end;border-bottom:1px solid #cecec4;padding:14px 0'><div><div style='font-size:13px;color:#66675f'>[Category from API]</div><h1 style='font-size:32px;margin:5px 0'>[Product name from API]</h1></div><span>[Stock status from API]</span></div><div style='display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:28px;margin-top:20px'><div style='aspect-ratio:4/3;background:#e2e1d8;display:grid;place-items:center;color:#66675f'>[Primary product image from API / Image unavailable]</div><aside style='border-left:1px solid #cecec4;padding-left:22px'><div style='font-size:20px'>[Price from API; currency not documented]</div><p>[Stock status from API]</p><label>Quantity <input type='number' min='1' value='1' style='width:64px;padding:10px;border:1px solid #aaa99e;background:#faf9f4'></label><p><button style='margin-top:12px;padding:14px 16px;border:0;background:#252720;color:#d9e96d'>Add to cart when signed in and available</button></p></aside></div><section style='border-top:1px solid #cecec4;margin-top:22px;padding-top:14px'><h2>Product information</h2><p>[Description, store name, and tags from API, when provided]</p></section></main></div>"
+    },
+    {
+      "id": "structure-3",
+      "label": "Product information sheet",
+      "lineage": "A field-led product record with the image as one part of the overview.",
+      "thesis": "Make documented product facts easy to scan before the shopper commits.",
+      "palette": ["#252720", "#f0efe8", "#faf9f4", "#d9e96d", "#5b681b"],
+      "materials": ["Archivo typography", "bone field", "fine rules", "one citron action signal"],
+      "viewport": "A full-width name and category introduce a two-column record: description and ruled API fields on one side, a single image and price/stock/quantity action on the other.",
+      "risk": "A field list can overemphasize metadata; keep the product name and image prominent and omit fields the API does not provide.",
+      "wireframe": {"cols": 12, "rows": 8, "regions": [{"label": "Storefront navigation", "x": 0, "y": 0, "w": 12, "h": 1}, {"label": "Breadcrumb and product name", "x": 0, "y": 1, "w": 12, "h": 1}, {"label": "Description and documented fields", "x": 0, "y": 2, "w": 7, "h": 5}, {"label": "Single product image", "x": 7, "y": 2, "w": 5, "h": 4, "accent": true}, {"label": "Price, stock, quantity, cart action", "x": 7, "y": 6, "w": 5, "h": 2}]},
+      "html": "<div style='font-family:Archivo Variable,Archivo,sans-serif;color:#252720;background:#f0efe8'><header style='background:#252720;color:#faf9f4;padding:16px 24px;display:flex;justify-content:space-between'><strong>The Shop</strong><nav>Products　 Cart　 Sign in</nav></header><main style='padding:28px 24px'><div style='color:#66675f;font-size:13px'>Products / [Category, when provided]</div><div style='border-bottom:1px solid #cecec4;padding:12px 0 18px'><div style='font-size:13px;color:#66675f'>[Category from API]</div><h1 style='font-size:34px;margin:5px 0'>[Product name from API]</h1></div><div style='display:grid;grid-template-columns:1fr .82fr;gap:32px;margin-top:22px'><section><h2 style='font-size:20px'>Product information</h2><p>[Description from API, when provided]</p><dl style='border-top:1px solid #cecec4'><dt style='padding-top:12px;color:#66675f'>Store</dt><dd style='margin:4px 0 12px'>[Store name from API, when provided]</dd><dt style='border-top:1px solid #cecec4;padding-top:12px;color:#66675f'>Tags</dt><dd style='margin:4px 0 12px'>[Tags from API, when provided]</dd><dt style='border-top:1px solid #cecec4;padding-top:12px;color:#66675f'>Availability</dt><dd style='margin:4px 0'>[Stock status from API]</dd></dl></section><aside><div style='aspect-ratio:4/4.65;background:#e2e1d8;display:grid;place-items:center;color:#66675f'>[Primary product image from API / Image unavailable]</div><p style='font-size:20px'>[Price from API; currency not documented]</p><label>Quantity <input type='number' min='1' value='1' style='width:64px;padding:10px;border:1px solid #aaa99e;background:#faf9f4'></label><p><button style='margin-top:12px;padding:14px 18px;border:0;background:#252720;color:#d9e96d'>Add to cart when signed in and available</button></p></aside></div></main></div>"
+    }
+  ],
+  "reroll": {
+    "registers": ["safer", "bolder"]
+  },
+  "buildPath": {
+    "value": "code",
+    "toggle": false
+  },
+  "canon": false,
+  "steer": true
+}

@@ -1,11 +1,10 @@
 import { useState, type SubmitEvent } from 'react'
 import { useListCategories } from '../../generated/categories/categories'
 import { useListPublicProducts } from '../../generated/products/products'
+import { storefrontMainClass } from '../../components/storefront/storefrontStyles'
 import { HomeCategories } from './HomeCategories'
-import { HomeFooter, HomeHeader } from './HomeChrome'
 import { HomeProductResults } from './HomeProductResults'
 import { HomeSearchSection } from './HomeSearchSection'
-import { containerClass } from './homeStyles'
 
 const PAGE_SIZE = 8
 
@@ -43,10 +42,7 @@ export function HomePage() {
   }
 
   return (
-    <div className="min-h-dvh bg-bone text-[15px] leading-normal text-ink">
-      <HomeHeader />
-
-      <main className={`${containerClass} pb-[76px] pt-12 md:pb-28 md:pt-[68px]`}>
+    <main className={storefrontMainClass}>
         <HomeSearchSection
           searchInput={searchInput}
           onSearchInputChange={setSearchInput}
@@ -71,9 +67,6 @@ export function HomePage() {
           onRetry={() => void productsQuery.refetch()}
           onClearFilters={clearFilters}
         />
-      </main>
-
-      <HomeFooter />
-    </div>
+    </main>
   )
 }
