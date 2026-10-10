@@ -7,7 +7,7 @@ import { AuthPage } from '../features/auth/AuthPage'
 import { CartPage } from '../features/cart/CartPage'
 import { CheckoutPage } from '../features/checkout/CheckoutPage'
 import { OrderDetailPage } from '../features/orders/OrderDetailPage'
-import { OrderPage } from '../features/orders/OrderPage';
+import { OrderPage } from '../features/orders/OrderPage'
 
 export const router = createBrowserRouter([
   {
