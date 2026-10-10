@@ -1,15 +1,14 @@
-import { Outlet, useLocation } from 'react-router'
+import { Outlet } from 'react-router'
 import { StorefrontFooter } from '../components/storefront/StorefrontFooter'
 import { StorefrontHeader } from '../components/storefront/StorefrontHeader'
 
 export function StorefrontLayout() {
-  const { pathname } = useLocation()
-  const activePage = pathname === '/products' ? 'products' : 'home'
-
   return (
-    <div className="min-h-dvh bg-bone text-[15px] leading-normal text-ink">
-      <StorefrontHeader activePage={activePage} />
-      <Outlet />
+    <div className="flex min-h-dvh flex-col bg-bone text-[15px] leading-normal text-ink">
+      <StorefrontHeader />
+      <div className="flex-1">
+        <Outlet />
+      </div>
       <StorefrontFooter />
     </div>
   )

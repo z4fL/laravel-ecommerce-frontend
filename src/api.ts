@@ -1,9 +1,9 @@
-let authorization: string | undefined;
-
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 
 export const API_ORIGIN = new URL(API_BASE_URL).origin;
+
+const TOKEN_KEY = "access_token";
 
 type ApiErrorBody = {
   success?: false;
@@ -63,16 +63,30 @@ export class ApiError extends Error {
     return this.errors?.[field] ?? [];
   }
 }
+
+const getAuthorization = () => {
+  return localStorage.getItem(TOKEN_KEY);
+};
+
+
 export const setAccessToken = (tokenType: string, accessToken: string) => {
   if (tokenType.toLowerCase() !== "bearer") {
     throw new Error(`Unsupported token type: ${tokenType}`);
   }
 
-  authorization = `${tokenType} ${accessToken}`;
+  localStorage.setItem(
+    TOKEN_KEY,
+    `${tokenType} ${accessToken}`,
+  );
+
 };
 
 export const clearAccessToken = () => {
-  authorization = undefined;
+  localStorage.removeItem(TOKEN_KEY);
+};
+
+export const hasAccessToken = () => {
+  return getAuthorization() !== null;
 };
 
 const parseResponseBody = async (response: Response): Promise<unknown> => {
@@ -106,8 +120,10 @@ export const apiFetch = async <T>(
   const headers = new Headers(options.headers);
   headers.set("Accept", "application/json");
 
-  if (authorization) {
-    headers.set("Authorization", authorization);
+  const token = getAuthorization();
+
+  if (token) {
+    headers.set("Authorization", token);
   }
 
   const response = await fetch(url, {

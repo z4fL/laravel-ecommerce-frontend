@@ -4,7 +4,8 @@ import {
   register,
 } from "./generated/authentication/authentication";
 import type { LoginBody, RegisterBody } from "./generated/models";
-import { clearAccessToken, setAccessToken } from "./api";
+import { ApiError, clearAccessToken, hasAccessToken, setAccessToken } from "./api";
+import { getMyProfile } from "./generated";
 
 export const signIn = async (credentials: LoginBody) => {
   const response = await login(credentials);
@@ -51,5 +52,23 @@ export const signOut = async () => {
     await logout();
   } finally {
     clearAccessToken();
+  }
+};
+
+export const validateSession = async () => {
+  if (!hasAccessToken()) {
+    return false;
+  }
+
+  try {
+    await getMyProfile();
+    return true;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      clearAccessToken();
+      return false;
+    }
+
+    throw error;
   }
 };
