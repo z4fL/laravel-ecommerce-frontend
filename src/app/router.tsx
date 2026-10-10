@@ -5,6 +5,8 @@ import { ProductsPage } from '../features/products/ProductsPage'
 import { ProductDetailPage } from '../features/product-detail/ProductDetailPage'
 import { AuthPage } from '../features/auth/AuthPage'
 import { CartPage } from '../features/cart/CartPage'
+import { CheckoutPage } from '../features/checkout/CheckoutPage'
+import { OrderDetailPage } from '../features/orders/OrderDetailPage'
 
 export const router = createBrowserRouter([
   {
@@ -14,6 +16,8 @@ export const router = createBrowserRouter([
       { path: '/products', element: <ProductsPage /> },
       { path: '/products/:slug', element: <ProductDetailPage /> },
       { path: '/cart', element: <CartPage /> },
+      { path: '/checkout', element: <CheckoutPage /> },
+      { path: '/orders/:orderId', element: <OrderDetailPage /> },
     ],
   },
   { path: '/login', element: <AuthPage mode="login" /> },

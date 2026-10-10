@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Link } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { LuMinus, LuPlus, LuTrash2 } from 'react-icons/lu'
@@ -12,9 +11,7 @@ import {
   useGetMyCart,
   useUpdateCartItem,
 } from '../../generated/cart/cart'
-import { usePreviewCheckout } from '../../generated/checkout/checkout'
-import { useListShippingAddresses } from '../../generated/shipping-addresses/shipping-addresses'
-import type { CartItem, CheckoutPreview, ShippingAddress } from '../../generated/models'
+import type { CartItem } from '../../generated/models'
 
 function getErrorStatus(error: unknown): number | undefined {
   return error instanceof ApiError ? error.status : undefined
@@ -27,34 +24,11 @@ function errorMessage(error: unknown) {
 type CartSummaryProps = {
   itemCount: number
   subtotal: number
-  addresses: ShippingAddress[]
-  addressesLoading: boolean
-  addressesError?: unknown
-  selectedAddressId?: number
-  onAddressChange: (id: number) => void
-  onCheckout: () => void
-  checkoutPending: boolean
-  checkoutError?: unknown
-  checkoutPreview?: CheckoutPreview
   onClear: () => void
   clearPending: boolean
 }
 
-function CartSummary({
-  itemCount,
-  subtotal,
-  addresses,
-  addressesLoading,
-  addressesError,
-  selectedAddressId,
-  onAddressChange,
-  onCheckout,
-  checkoutPending,
-  checkoutError,
-  checkoutPreview,
-  onClear,
-  clearPending,
-}: CartSummaryProps) {
+function CartSummary({ itemCount, subtotal, onClear, clearPending }: CartSummaryProps) {
   return (
     <aside className="grid content-start gap-5 border-y border-rule py-5" aria-labelledby="cart-summary-title">
       <h2 className="m-0 text-[20px] font-[560] leading-tight" id="cart-summary-title">Order summary</h2>
@@ -65,46 +39,13 @@ function CartSummary({
         </div>
         <div className="flex justify-between gap-4 text-[17px] font-semibold">
           <dt>Subtotal</dt>
-          <dd className="m-0 tabular-nums">{formatPrice(checkoutPreview?.summary.subtotal ?? subtotal)}</dd>
+          <dd className="m-0 tabular-nums">{formatPrice(subtotal)}</dd>
         </div>
       </dl>
 
-      {addressesLoading ? (
-        <p className="m-0 text-[13px] text-muted" role="status">Loading saved addresses...</p>
-      ) : addressesError ? (
-        <p className="m-0 text-[13px] text-red-800" role="alert">{errorMessage(addressesError)}</p>
-      ) : addresses.length > 0 ? (
-        <div className="grid gap-1.5">
-          <label className="text-[12px] font-semibold" htmlFor="cart-shipping-address">Deliver to</label>
-          <select
-            className="min-h-11 w-full border border-rule-strong bg-paper px-3 text-[14px] text-ink"
-            id="cart-shipping-address"
-            value={selectedAddressId ?? ''}
-            onChange={(event) => onAddressChange(Number(event.currentTarget.value))}
-          >
-            {addresses.map((address) => (
-              <option key={address.id} value={address.id}>
-                {address.label ?? address.recipient_name} · {address.city}{address.is_default ? ' · Default' : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-      ) : (
-        <p className="m-0 text-[13px] text-muted">Add a saved delivery address before checkout.</p>
-      )}
-
-      <button
-        className="inline-flex min-h-12 items-center justify-center gap-2 border-0 bg-charcoal px-4 font-semibold text-spectral-citron hover:bg-charcoal-hover disabled:cursor-not-allowed disabled:opacity-55"
-        type="button"
-        disabled={!selectedAddressId || addresses.length === 0 || Boolean(addressesError) || checkoutPending}
-        onClick={onCheckout}
-        aria-busy={checkoutPending}
-      >
-        {checkoutPending ? 'Preparing checkout...' : 'Continue to checkout'}
-      </button>
-
-      {Boolean(checkoutError) && <p className="m-0 text-[13px] text-red-800" role="alert">{errorMessage(checkoutError)}</p>}
-      {checkoutPreview && <p className="m-0 text-[13px] text-marker-olive" role="status">Checkout preview ready for {checkoutPreview.summary.items_count} items.</p>}
+      <Link className="inline-flex min-h-12 items-center justify-center bg-charcoal px-4 font-semibold text-spectral-citron no-underline hover:bg-charcoal-hover" to="/checkout">
+        Continue to checkout
+      </Link>
 
       <button
         className="min-h-10 justify-self-start border-0 bg-transparent p-0 text-[13px] font-semibold text-muted underline-offset-4 hover:text-ink hover:underline disabled:opacity-55"
@@ -285,18 +226,6 @@ export function CartPage() {
   const clearMutation = useClearMyCart({
     mutation: { onSuccess: () => void queryClient.invalidateQueries({ queryKey: getGetMyCartQueryKey() }) },
   })
-  const addressesQuery = useListShippingAddresses({
-    query: { enabled: Boolean(cart?.items.length), retry: false, staleTime: 60_000 },
-  })
-  const checkoutMutation = usePreviewCheckout()
-  const [selectedAddressId, setSelectedAddressId] = useState<number>()
-
-  const addresses = addressesQuery.data?.status === 200 ? addressesQuery.data.data.data ?? [] : []
-  const checkoutPreview = checkoutMutation.data?.status === 200 ? checkoutMutation.data.data.data : undefined
-  const activeAddress = addresses.find((address) => address.id === selectedAddressId)
-    ?? addresses.find((address) => address.is_default)
-    ?? addresses[0]
-
   function changeQuantity(item: CartItem, quantity: number) {
     updateMutation.mutate({ item: item.id, data: { quantity } })
   }
@@ -310,10 +239,6 @@ export function CartPage() {
     clearMutation.mutate()
   }
 
-  function continueToCheckout() {
-    if (activeAddress) checkoutMutation.mutate({ data: { shipping_address_id: activeAddress.id } })
-  }
-
   const items = cart?.items ?? []
   const subtotal = items.reduce((total, item) => total + item.price_snapshot * item.quantity, 0)
   const mutationError = updateMutation.error ?? deleteMutation.error ?? clearMutation.error
@@ -321,15 +246,6 @@ export function CartPage() {
     <CartSummary
       itemCount={items.reduce((count, item) => count + item.quantity, 0)}
       subtotal={subtotal}
-      addresses={addresses}
-      addressesLoading={addressesQuery.isLoading}
-      addressesError={addressesQuery.error}
-      selectedAddressId={activeAddress?.id}
-      onAddressChange={setSelectedAddressId}
-      onCheckout={continueToCheckout}
-      checkoutPending={checkoutMutation.isPending}
-      checkoutError={checkoutMutation.error}
-      checkoutPreview={checkoutPreview}
       onClear={clearCart}
       clearPending={clearMutation.isPending}
     />
