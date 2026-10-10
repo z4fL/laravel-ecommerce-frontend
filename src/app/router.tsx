@@ -3,11 +3,12 @@ import { StorefrontLayout } from './StorefrontLayout'
 import { HomePage } from '../features/home/HomePage'
 import { ProductsPage } from '../features/products/ProductsPage'
 import { ProductDetailPage } from '../features/product-detail/ProductDetailPage'
+import { AuthPage } from '../features/auth/AuthPage'
 
-function PlaceholderPage({ title }: { title: string }) {
+function CartPlaceholder() {
   return (
     <main>
-      <h1>{title}</h1>
+      <h1>Cart</h1>
     </main>
   )
 }
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
       { path: '/products/:slug', element: <ProductDetailPage /> },
     ],
   },
-  { path: '/login', element: <PlaceholderPage title="Login" /> },
-  { path: '/cart', element: <PlaceholderPage title="Cart" /> },
+  { path: '/login', element: <AuthPage mode="login" /> },
+  { path: '/register', element: <AuthPage mode="register" /> },
+  { path: '/cart', element: <CartPlaceholder /> },
 ])

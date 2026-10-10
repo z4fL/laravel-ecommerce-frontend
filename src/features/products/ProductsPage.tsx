@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
-import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
 import { useListPublicProducts } from "../../generated/products/products";
 import { storefrontMainClass } from "../../components/storefront/storefrontStyles";
-import { StorefrontProductTile } from "../../components/storefront/StorefrontProductTile";
 import { ProductSearchFilters } from "./ProductSearchFilters";
 import { ProductCatalog } from "./ProductCatalog";
 
