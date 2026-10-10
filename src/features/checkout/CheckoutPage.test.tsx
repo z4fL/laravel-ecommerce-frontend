@@ -49,6 +49,12 @@ const cartItem = {
   quantity: 2,
   price_snapshot: 100_000,
 }
+const unselectedCartItem = {
+  id: 9,
+  product: { id: 4, name: 'Coffee Grinder', slug: 'coffee-grinder' },
+  quantity: 1,
+  price_snapshot: 35_000,
+}
 
 function cartResponse(items: typeof cartItem[] | { id: number; product: null; quantity: number; price_snapshot: number }[]) {
   return {
@@ -82,14 +88,14 @@ function previewResponse(addressId: number) {
   }
 }
 
-function renderCheckout() {
+function renderCheckout(initialEntry = '/checkout') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/checkout']}>
+      <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/orders/:orderId" element={<OrderDetailPage />} />
@@ -107,7 +113,7 @@ describe('CheckoutPage', () => {
     let paymentRequests = 0
 
     server.use(
-      http.get(cartUrl, () => HttpResponse.json(cartResponse([cartItem]))),
+      http.get(cartUrl, () => HttpResponse.json(cartResponse([cartItem, unselectedCartItem]))),
       http.get(addressesUrl, () => HttpResponse.json(addressResponse())),
       http.post(checkoutUrl, async ({ request }) => {
         const body = await request.json() as { shipping_address_id: number }
@@ -185,9 +191,12 @@ describe('CheckoutPage', () => {
       })),
     )
 
-    renderCheckout()
+    renderCheckout('/checkout?items=8')
 
     expect(await screen.findByRole('radio', { name: /rumah/ })).toBeChecked()
+    expect(screen.getByText('Gaming Laptop')).toBeVisible()
+    expect(screen.queryByText('Coffee Grinder')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back to cart' })).toHaveAttribute('href', '/cart?selected=8')
     await waitFor(() => expect(previewBodies).toEqual([{ shipping_address_id: 21 }]))
     await user.click(screen.getByRole('radio', { name: /kantor/ }))
     await waitFor(() => expect(previewBodies).toEqual([
@@ -205,7 +214,7 @@ describe('CheckoutPage', () => {
       'href',
       'https://payments.example/continue',
     )
-    expect(orderBody).toEqual({ shipping_address_id: 22 })
+    expect(orderBody).toEqual({ shipping_address_id: 22, cart_item_ids: [8] })
     expect(paymentRequests).toBe(1)
     expect(screen.getByText(/Order ORD-0041 created/)).toBeVisible()
     expect(screen.getByText('Rp225.000')).toBeVisible()

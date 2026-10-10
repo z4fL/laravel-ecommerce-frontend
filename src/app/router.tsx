@@ -7,6 +7,7 @@ import { AuthPage } from '../features/auth/AuthPage'
 import { CartPage } from '../features/cart/CartPage'
 import { CheckoutPage } from '../features/checkout/CheckoutPage'
 import { OrderDetailPage } from '../features/orders/OrderDetailPage'
+import { OrderPage } from '../features/orders/OrderPage';
 
 export const router = createBrowserRouter([
   {
@@ -17,6 +18,7 @@ export const router = createBrowserRouter([
       { path: '/products/:slug', element: <ProductDetailPage /> },
       { path: '/cart', element: <CartPage /> },
       { path: '/checkout', element: <CheckoutPage /> },
+      { path: '/orders/', element: <OrderPage /> },
       { path: '/orders/:orderId', element: <OrderDetailPage /> },
     ],
   },

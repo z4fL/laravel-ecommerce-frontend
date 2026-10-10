@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { LuArrowUpRight, LuX } from 'react-icons/lu'
+import { LuArrowLeft, LuArrowUpRight, LuX } from 'react-icons/lu'
 import { ApiError } from '../../api'
 import { storefrontContainerClass } from '../../components/storefront/storefrontStyles'
 import { formatPrice } from '../../components/storefront/StorefrontProductTile'
@@ -10,7 +10,7 @@ import { usePreviewCheckout } from '../../generated/checkout/checkout'
 import { useCreateOrder } from '../../generated/orders/orders'
 import { useCreatePayment } from '../../generated/payments/payments'
 import { useListShippingAddresses } from '../../generated/shipping-addresses/shipping-addresses'
-import type { CartItem, CheckoutItem, Order, Payment, ShippingAddress } from '../../generated/models'
+import type { CartItem, Order, Payment, ShippingAddress } from '../../generated/models'
 
 function getErrorStatus(error: unknown): number | undefined {
   return error instanceof ApiError ? error.status : undefined
@@ -64,6 +64,16 @@ function EmptyCheckout() {
   )
 }
 
+function EmptySelection() {
+  return (
+    <main className={`${storefrontContainerClass} flex min-h-[52vh] flex-col items-start justify-center pb-20 pt-12`}>
+      <h1 className="m-0 text-[30px] font-[560] leading-tight">No items selected</h1>
+      <p className="mb-5 mt-3 max-w-[55ch] text-muted">Return to your cart and select at least one item to check out.</p>
+      <Link className="inline-flex min-h-11 items-center bg-charcoal px-4 font-semibold text-spectral-citron no-underline hover:bg-charcoal-hover" to="/cart?selected=">Back to cart</Link>
+    </main>
+  )
+}
+
 function AddressDetails({ address }: { address: ShippingAddress }) {
   return (
     <span className="block min-w-0">
@@ -96,17 +106,6 @@ function cartDisplayItem(item: CartItem): DisplayItem {
     quantity: item.quantity,
     unitPrice: item.price_snapshot,
     subtotal: item.price_snapshot * item.quantity,
-  }
-}
-
-function checkoutDisplayItem(item: CheckoutItem): DisplayItem {
-  return {
-    id: item.id,
-    name: item.product_name,
-    sku: item.product_sku,
-    quantity: item.quantity,
-    unitPrice: item.unit_price,
-    subtotal: item.subtotal,
   }
 }
 
@@ -150,11 +149,20 @@ function ItemRows({ items }: { items: DisplayItem[] }) {
 
 export function CheckoutPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const cartQuery = useGetMyCart({ query: { retry: false, staleTime: 30_000 } })
   const cart = cartQuery.data?.status === 200 ? cartQuery.data.data.data : undefined
+  const cartItems = cart?.items ?? []
+  const requestedIds = searchParams.get('items')
+  const requestedIdSet = requestedIds === null
+    ? undefined
+    : new Set(requestedIds.split(',').map(Number).filter(Number.isSafeInteger))
+  const selectedCartItems = requestedIdSet
+    ? cartItems.filter((item) => requestedIdSet.has(item.id))
+    : cartItems
   const addressesQuery = useListShippingAddresses({
-    query: { enabled: Boolean(cart?.items.length), retry: false, staleTime: 60_000 },
+    query: { enabled: selectedCartItems.length > 0, retry: false, staleTime: 60_000 },
   })
   const previewMutation = usePreviewCheckout()
   const orderMutation = useCreateOrder()
@@ -187,19 +195,18 @@ export function CheckoutPage() {
     )
   }, [addresses, previewMutation.mutate, selectedAddressId])
 
-  const cartItems = cart?.items ?? []
-  const cartSubtotal = cartItems.reduce((total, item) => total + item.price_snapshot * item.quantity, 0)
-  const invalidCart = cartItems.some((item) => !item.product)
-  const previewItems = checkoutPreview?.items.map(checkoutDisplayItem)
+  const cartSubtotal = selectedCartItems.reduce((total, item) => total + item.price_snapshot * item.quantity, 0)
+  const invalidCart = selectedCartItems.some((item) => !item.product)
   const orderedItems = createdOrder?.items?.map(orderDisplayItem)
-  const displayItems = orderedItems?.length ? orderedItems : previewItems ?? cartItems.map(cartDisplayItem)
+  const displayItems = orderedItems?.length ? orderedItems : selectedCartItems.map(cartDisplayItem)
   const unitCount = displayItems.reduce((count, item) => count + item.quantity, 0)
-  const subtotal = createdOrder?.subtotal ?? checkoutPreview?.summary.subtotal ?? cartSubtotal
+  const subtotal = createdOrder?.subtotal ?? cartSubtotal
   const isSubmitting = orderMutation.isPending || paymentMutation.isPending
   const canPlaceOrder = Boolean(
     selectedAddressId
     && activeAddress
     && checkoutPreview
+    && (createdOrder || selectedCartItems.length > 0)
     && !invalidCart
     && acknowledgedMissingTotal
     && !isSubmitting
@@ -247,7 +254,10 @@ export function CheckoutPage() {
       let order = createdOrder
       if (!order) {
         const orderResponse = await orderMutation.mutateAsync({
-          data: { shipping_address_id: selectedAddressId! },
+          data: {
+            shipping_address_id: selectedAddressId!,
+            cart_item_ids: selectedCartItems.map((item) => item.id),
+          },
         })
         if (orderResponse.status !== 201) {
           setFlowError('The order could not be created. Review your cart and try again.')
@@ -270,6 +280,7 @@ export function CheckoutPage() {
     return <CheckoutLoadError error={cartQuery.error} onRetry={() => void cartQuery.refetch()} />
   }
   if ((!cart || cart.items.length === 0) && !createdOrder) return <EmptyCheckout />
+  if (selectedCartItems.length === 0 && !createdOrder) return <EmptySelection />
 
   const previewError = previewMutation.error
   const addressError = addressesQuery.error
@@ -277,10 +288,14 @@ export function CheckoutPage() {
 
   return (
     <main className={`${storefrontContainerClass} pb-20 pt-9 md:pb-28 md:pt-12`}>
+      <Link className="mb-5 inline-flex min-h-10 items-center gap-2 text-[13px] font-semibold text-ink underline-offset-4 hover:underline" to={`/cart?selected=${selectedCartItems.map((item) => item.id).join(',')}`}>
+        <LuArrowLeft aria-hidden="true" className="size-4" />
+        Back to cart
+      </Link>
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3 md:mb-7">
         <div>
           <h1 className="m-0 text-[30px] font-[560] leading-[1.1]">Check the basket before delivery</h1>
-          <p className="mb-0 mt-2 max-w-[70ch] text-[13px] text-muted">Items and subtotal are shown from your cart. Shipping cost and order total are not included in the checkout preview.</p>
+          <p className="mb-0 mt-2 max-w-[70ch] text-[13px] text-muted">Selected items and subtotal are shown from your cart. Shipping cost and order total are not included before you place the order.</p>
         </div>
         <p className="m-0 text-[12px] text-muted"><strong className="text-ink">Items</strong> &nbsp; / &nbsp; Delivery &nbsp; / &nbsp; Payment</p>
       </header>
@@ -308,7 +323,7 @@ export function CheckoutPage() {
           <div className="sm:pr-5">
             <dt className="text-[12px] font-semibold text-muted">Subtotal</dt>
             <dd className="m-0 mt-1 text-[18px] font-semibold tabular-nums">{formatPrice(subtotal)}</dd>
-            <p className="mb-0 mt-1 text-[11px] text-muted">{checkoutPreview ? 'Confirmed by checkout preview' : 'From cart price snapshots'}</p>
+            <p className="mb-0 mt-1 text-[11px] text-muted">{createdOrder ? 'Confirmed by the order response' : 'From selected cart price snapshots'}</p>
           </div>
           <div className="border-t border-rule pt-3 sm:border-l sm:border-t-0 sm:px-5 sm:pt-0">
             <dt className="text-[12px] font-semibold text-muted">Shipping cost</dt>
@@ -432,8 +447,6 @@ export function CheckoutPage() {
           ) : null}
         </section>
       </div>
-
-      <Link className="mt-6 inline-flex min-h-10 items-center text-[13px] font-semibold text-ink underline-offset-4 hover:underline" to="/cart">Back to cart</Link>
 
       <dialog
         ref={paymentDialogRef}

@@ -840,7 +840,7 @@ paths:
     post:
       tags:
         - Orders
-      summary: 'Create an order from the authenticated user cart'
+      summary: 'Create an order from selected cart items'
       operationId: createOrder
       requestBody:
         required: true
@@ -849,10 +849,19 @@ paths:
             schema:
               required:
                 - shipping_address_id
+                - cart_item_ids
               properties:
                 shipping_address_id:
                   type: integer
                   example: 1
+                cart_item_ids:
+                  type: array
+                  items:
+                    type: integer
+                  example:
+                    - 3
+                    - 5
+                  minItems: 1
               type: object
       responses:
         201:

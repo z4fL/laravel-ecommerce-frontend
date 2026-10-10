@@ -1,4 +1,5 @@
-import { Link } from 'react-router'
+import { useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { LuMinus, LuPlus, LuTrash2 } from 'react-icons/lu'
 import { ApiError } from '../../api'
@@ -24,17 +25,21 @@ function errorMessage(error: unknown) {
 type CartSummaryProps = {
   itemCount: number
   subtotal: number
+  selectedCount: number
+  checkoutUrl: string
   onClear: () => void
+  onRemoveSelected: () => void
   clearPending: boolean
+  deletePending: boolean
 }
 
-function CartSummary({ itemCount, subtotal, onClear, clearPending }: CartSummaryProps) {
+function CartSummary({ itemCount, subtotal, selectedCount, checkoutUrl, onClear, onRemoveSelected, clearPending, deletePending }: CartSummaryProps) {
   return (
     <aside className="grid content-start gap-5 border-y border-rule py-5" aria-labelledby="cart-summary-title">
       <h2 className="m-0 text-[20px] font-[560] leading-tight" id="cart-summary-title">Order summary</h2>
       <dl className="m-0 grid gap-3 border-b border-rule pb-4 text-[14px]">
         <div className="flex justify-between gap-4">
-          <dt className="text-muted">Items ({itemCount})</dt>
+          <dt className="text-muted">Selected units ({itemCount})</dt>
           <dd className="m-0 font-semibold tabular-nums">{formatPrice(subtotal)}</dd>
         </div>
         <div className="flex justify-between gap-4 text-[17px] font-semibold">
@@ -43,14 +48,26 @@ function CartSummary({ itemCount, subtotal, onClear, clearPending }: CartSummary
         </div>
       </dl>
 
-      <Link className="inline-flex min-h-12 items-center justify-center bg-charcoal px-4 font-semibold text-spectral-citron no-underline hover:bg-charcoal-hover" to="/checkout">
+      <Link className={`inline-flex min-h-12 items-center justify-center bg-charcoal px-4 font-semibold text-spectral-citron no-underline hover:bg-charcoal-hover ${selectedCount === 0 ? 'pointer-events-none opacity-55' : ''}`} to={checkoutUrl} aria-disabled={selectedCount === 0} onClick={(event) => {
+        if (selectedCount === 0) event.preventDefault()
+      }}>
         Continue to checkout
       </Link>
 
       <button
+        className="inline-flex min-h-10 items-center gap-1.5 justify-self-start border-0 bg-transparent p-0 text-[13px] font-semibold text-muted underline-offset-4 hover:text-ink hover:underline disabled:opacity-55"
+        type="button"
+        disabled={selectedCount === 0 || deletePending}
+        onClick={onRemoveSelected}
+      >
+        <LuTrash2 aria-hidden="true" className="size-3.5" />
+        {deletePending ? 'Removing selected items...' : `Remove selected (${selectedCount})`}
+      </button>
+
+      <button
         className="min-h-10 justify-self-start border-0 bg-transparent p-0 text-[13px] font-semibold text-muted underline-offset-4 hover:text-ink hover:underline disabled:opacity-55"
         type="button"
-        disabled={clearPending}
+        disabled={clearPending || deletePending}
         onClick={onClear}
       >
         {clearPending ? 'Removing items...' : 'Remove all items'}
@@ -61,11 +78,15 @@ function CartSummary({ itemCount, subtotal, onClear, clearPending }: CartSummary
 
 type CartLayoutProps = {
   items: CartItem[]
+  selectedIds: Set<number>
+  onSelectionChange: (itemId: number, selected: boolean) => void
+  onSelectAll: (selected: boolean) => void
   summary: React.ReactNode
   onQuantityChange: (item: CartItem, quantity: number) => void
   onRemove: (item: CartItem) => void
   updatingItemId?: number
   removingItemId?: number
+  bulkDeletePending?: boolean
   mutationError?: unknown
 }
 
@@ -130,7 +151,8 @@ function CartMutationNotice({ error }: { error?: unknown }) {
   )
 }
 
-function ConversionCart({ items, summary, onQuantityChange, onRemove, updatingItemId, removingItemId, mutationError }: CartLayoutProps) {
+function ConversionCart({ items, selectedIds, onSelectionChange, onSelectAll, summary, onQuantityChange, onRemove, updatingItemId, removingItemId, bulkDeletePending, mutationError }: CartLayoutProps) {
+  const selectedCount = selectedIds.size
   return (
     <main className={`${storefrontContainerClass} pb-20 pt-9 md:pb-28 md:pt-14`}>
       <header className="mb-7 flex flex-wrap items-end justify-between gap-3 md:mb-9">
@@ -140,20 +162,43 @@ function ConversionCart({ items, summary, onQuantityChange, onRemove, updatingIt
       <CartMutationNotice error={mutationError} />
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,344px)] lg:gap-12">
         <section aria-label="Cart items">
+          <label className="mb-3 inline-flex min-h-10 cursor-pointer items-center gap-3 text-[13px] font-semibold">
+            <input
+              className="size-4 accent-marker-olive"
+              type="checkbox"
+              checked={selectedCount === items.length}
+              disabled={bulkDeletePending}
+              ref={(input) => {
+                if (input) input.indeterminate = selectedCount > 0 && selectedCount < items.length
+              }}
+              onChange={(event) => onSelectAll(event.currentTarget.checked)}
+            />
+            Select all items ({selectedCount} selected)
+          </label>
           <ul className="cart-density m-0 grid list-none gap-0 border-y border-rule p-0">
             {items.map((item) => (
               <li className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-3 border-b border-rule py-5 last:border-b-0" key={item.id}>
-                <div className="min-w-0">
-                  <ProductName item={item} />
-                  <p className="mb-0 mt-1 text-[12px] text-muted">{formatPrice(item.price_snapshot)} per item</p>
+                <div className="flex min-w-0 items-start gap-3">
+                  <input
+                    className="mt-1 size-4 shrink-0 accent-marker-olive"
+                    type="checkbox"
+                    aria-label={`Select ${item.product?.name ?? 'unavailable product'}`}
+                    checked={selectedIds.has(item.id)}
+                    disabled={bulkDeletePending}
+                    onChange={(event) => onSelectionChange(item.id, event.currentTarget.checked)}
+                  />
+                  <div className="min-w-0">
+                    <ProductName item={item} />
+                    <p className="mb-0 mt-1 text-[12px] text-muted">{formatPrice(item.price_snapshot)} per item</p>
+                  </div>
                 </div>
                 <p className="m-0 text-right text-[15px] font-semibold tabular-nums">{formatPrice(item.price_snapshot * item.quantity)}</p>
                 <div className="col-span-2 flex items-center justify-between gap-4">
-                  <QuantityControl item={item} disabled={updatingItemId === item.id} onChange={(quantity) => onQuantityChange(item, quantity)} />
+                  <QuantityControl item={item} disabled={updatingItemId === item.id || Boolean(bulkDeletePending)} onChange={(quantity) => onQuantityChange(item, quantity)} />
                   <button
                     className="inline-flex min-h-10 items-center gap-1.5 border-0 bg-transparent p-0 text-[12px] font-semibold text-muted hover:text-ink"
                     type="button"
-                    disabled={removingItemId === item.id}
+                    disabled={removingItemId === item.id || bulkDeletePending}
                     onClick={() => onRemove(item)}
                     aria-label={`Remove ${item.product?.name ?? 'item'} from cart`}
                   >
@@ -215,6 +260,7 @@ function EmptyCart() {
 
 export function CartPage() {
   const queryClient = useQueryClient()
+  const [searchParams, setSearchParams] = useSearchParams()
   const cartQuery = useGetMyCart({ query: { retry: false, staleTime: 30_000 } })
   const cart = cartQuery.data?.status === 200 ? cartQuery.data.data.data : undefined
   const updateMutation = useUpdateCartItem({
@@ -226,6 +272,30 @@ export function CartPage() {
   const clearMutation = useClearMyCart({
     mutation: { onSuccess: () => void queryClient.invalidateQueries({ queryKey: getGetMyCartQueryKey() }) },
   })
+  const [bulkDeletePending, setBulkDeletePending] = useState(false)
+  const items = cartQuery.data?.status === 200 ? cartQuery.data.data.data.items ?? [] : []
+  const selectionParam = searchParams.get('selected')
+  const selectedIds = selectionParam === null
+    ? new Set(items.map((item) => item.id))
+    : new Set(selectionParam.split(',').map(Number).filter(Number.isSafeInteger))
+
+  function updateSelection(nextIds: Set<number>) {
+    const params = new URLSearchParams(searchParams)
+    params.set('selected', items.filter((item) => nextIds.has(item.id)).map((item) => item.id).join(','))
+    setSearchParams(params, { replace: true })
+  }
+
+  function changeSelection(itemId: number, selected: boolean) {
+    const nextIds = new Set(selectedIds)
+    if (selected) nextIds.add(itemId)
+    else nextIds.delete(itemId)
+    updateSelection(nextIds)
+  }
+
+  function selectAll(selected: boolean) {
+    updateSelection(new Set(selected ? items.map((item) => item.id) : []))
+  }
+
   function changeQuantity(item: CartItem, quantity: number) {
     updateMutation.mutate({ item: item.id, data: { quantity } })
   }
@@ -239,23 +309,42 @@ export function CartPage() {
     clearMutation.mutate()
   }
 
-  const items = cart?.items ?? []
-  const subtotal = items.reduce((total, item) => total + item.price_snapshot * item.quantity, 0)
+  async function removeSelectedItems() {
+    const selectedItems = items.filter((item) => selectedIds.has(item.id))
+    if (selectedItems.length === 0 || !window.confirm(`Remove ${selectedItems.length} selected ${selectedItems.length === 1 ? 'item' : 'items'} from your cart?`)) return
+    setBulkDeletePending(true)
+    try {
+      await Promise.allSettled(selectedItems.map((item) => deleteMutation.mutateAsync({ item: item.id })))
+    } finally {
+      setBulkDeletePending(false)
+    }
+  }
+
+  const selectedItems = items.filter((item) => selectedIds.has(item.id))
+  const subtotal = selectedItems.reduce((total, item) => total + item.price_snapshot * item.quantity, 0)
   const mutationError = updateMutation.error ?? deleteMutation.error ?? clearMutation.error
   const summary = (
     <CartSummary
-      itemCount={items.reduce((count, item) => count + item.quantity, 0)}
+      itemCount={selectedItems.reduce((count, item) => count + item.quantity, 0)}
       subtotal={subtotal}
+      selectedCount={selectedItems.length}
+      checkoutUrl={`/checkout?items=${selectedItems.map((item) => item.id).join(',')}`}
       onClear={clearCart}
+      onRemoveSelected={() => void removeSelectedItems()}
       clearPending={clearMutation.isPending}
+      deletePending={bulkDeletePending}
     />
   )
   const layoutProps = {
     items,
+    selectedIds: new Set(selectedItems.map((item) => item.id)),
+    onSelectionChange: changeSelection,
+    onSelectAll: selectAll,
     onQuantityChange: changeQuantity,
     onRemove: removeItem,
     updatingItemId: updateMutation.variables?.item,
     removingItemId: deleteMutation.variables?.item,
+    bulkDeletePending,
     mutationError,
   }
 
