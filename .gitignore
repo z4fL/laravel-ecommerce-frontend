@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 
+.claude
+
 src/generated/
 
 # Editor directories and files
